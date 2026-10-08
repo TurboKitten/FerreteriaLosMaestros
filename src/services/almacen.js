@@ -1,8 +1,10 @@
-import {
-  CUENTAS_INICIALES,
-  PRODUCTOS_INICIALES,
-  USUARIOS_INICIALES,
-} from '../data/tienda'
+import { obtenerDatosIniciales } from './datosIniciales'
+
+const {
+  productos: productosIniciales,
+  usuarios: usuariosIniciales,
+  cuentas: cuentasIniciales,
+} = obtenerDatosIniciales()
 
 export const CLAVES = {
   productos: 'admin_productos',
@@ -28,7 +30,7 @@ export function escribirJSON(clave, datos) {
 
 
 export function cargarProductos() {
-  return leerJSON(CLAVES.productos, PRODUCTOS_INICIALES)
+  return leerJSON(CLAVES.productos, productosIniciales)
 }
 export function guardarProductos(productos) {
   escribirJSON(CLAVES.productos, productos)
@@ -36,7 +38,7 @@ export function guardarProductos(productos) {
 
 
 export function cargarUsuarios() {
-  return leerJSON(CLAVES.usuarios, USUARIOS_INICIALES)
+  return leerJSON(CLAVES.usuarios, usuariosIniciales)
 }
 export function guardarUsuarios(usuarios) {
   escribirJSON(CLAVES.usuarios, usuarios)
@@ -44,7 +46,7 @@ export function guardarUsuarios(usuarios) {
 
 
 export function cargarCuentas() {
-  return leerJSON(CLAVES.cuentas, CUENTAS_INICIALES)
+  return leerJSON(CLAVES.cuentas, cuentasIniciales)
 }
 export function guardarCuentas(cuentas) {
   escribirJSON(CLAVES.cuentas, cuentas)
@@ -92,13 +94,13 @@ export function guardarCarrito(carrito) {
 
 export function inicializarDatos() {
   if (!localStorage.getItem(CLAVES.productos)) {
-    guardarProductos(PRODUCTOS_INICIALES)
+    guardarProductos(productosIniciales)
   }
   if (!localStorage.getItem(CLAVES.usuarios)) {
-    guardarUsuarios(USUARIOS_INICIALES)
+    guardarUsuarios(usuariosIniciales)
   }
   if (!localStorage.getItem(CLAVES.cuentas)) {
-    guardarCuentas(CUENTAS_INICIALES)
+    guardarCuentas(cuentasIniciales)
   }
 }
 
