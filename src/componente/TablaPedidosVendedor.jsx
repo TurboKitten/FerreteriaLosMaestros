@@ -11,7 +11,7 @@ function estadoDe(valor) {
   return ESTADOS.find((e) => e.valor === valor) || { label: 'Desconocido', clase: 'bg-secondary' }
 }
 
-// Control de estados de entrega de los pedidos (columna derecha del vendedor).
+//control de estados de entrega de los pedidos (columna derecha del vendedor).
 export default function TablaPedidosVendedor() {
   const [pedidos, setPedidos] = useState(() => cargarPedidos())
 
