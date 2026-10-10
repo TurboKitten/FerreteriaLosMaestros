@@ -78,7 +78,7 @@ body {
 
 .hero-simple {
   background: linear-gradient(rgba(33, 37, 41, 0.85), rgba(33, 37, 41, 0.85)), 
-              url('../assets/images/fondo_inico.jpg'); 
+              url('./assets/images/fondo_inico.jpg'); 
   background-size: cover;       
   background-position: center;  
   color: #ffffff;
