@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Outlet, useNavigate } from 'react-router'
-import Header from './Headers/Header'
-import Footer from './Footers/Footer'
+import Header from './Header/Header'
+import Footer from './Footer/Footer'
 import { cerrarSesion, obtenerSesion } from '../services/almacen'
 
 function Layout() {

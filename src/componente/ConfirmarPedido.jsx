@@ -1,82 +1,108 @@
 import { useState } from 'react'
-import ProductoCard from './ProductoCard'
-import AlertaBootstrap from './AlertaBootstrap'
-import { CATEGORIAS } from '../data/tienda'
-import { agregarProducto } from '../utils/carrito'
-import { cargarProductos, cargarCarrito, guardarCarrito } from '../services/almacen'
+import { formatoPesos } from '../utils/formato'
 
 
-export default function CatalogoProductos() {
-  const [filtro, setFiltro] = useState('todos')
-  const [productos] = useState(() => cargarProductos())
-  const [mensaje, setMensaje] = useState(null)
+export default function ConfirmarPedido({ totales, esContratista, tieneCuentaCorriente, onConfirmar }) {
+  const [entrega, setEntrega] = useState('retiro')
+  const [direccionDespacho, setDireccionDespacho] = useState('')
+  const [metodoPago, setMetodoPago] = useState('tarjeta')
+  const [usarCuentaCorriente, setUsarCuentaCorriente] = useState(false)
 
-  const visibles =
-    filtro === 'todos' ? productos : productos.filter((p) => p.categoria === filtro)
-
-  const manejarAgregar = (codigo) => {
-    const producto = productos.find((p) => p.codigo === codigo)
-    if (!producto) {
-      setMensaje({tipo: 'danger', texto: 'No se encontró el producto.'})
-      return
-    }
-
-    const carrito = cargarCarrito()
-    const nuevoCarrito = agregarProducto(carrito, producto)
-    if (nuevoCarrito === carrito) {
-      setMensaje({tipo: 'warning', texto: `No puedes agregar más unidades de ${producto.producto}: stock insuficiente.`})
-      return
-    }
-
-    guardarCarrito(nuevoCarrito)
-    setMensaje({tipo: 'success', texto: `${producto.producto} fue agregado al carrito.`})
+  const confirmar = () => {
+    onConfirmar({ entrega, direccionDespacho, metodoPago, usarCuentaCorriente })
   }
 
   return (
-    <section id="catalogo" className="container py-5">
-      <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2 border-bottom">
-        <div>
-          <h2 className="h4 fw-bold mb-0">
-            <i className="bi bi-grid-fill text-primary me-2" />Catálogo de Productos
-          </h2>
-          <small className="text-muted">Precios con IVA incluido. Consulta descuento especial para contratistas.</small>
-        </div>
+    <section id="seccionConfirmacion" className="container pb-5">
+      <div className="card shadow-sm">
+        <div className="card-body">
+          <h2 className="h5 fw-bold mb-4">Confirmar pedido</h2>
 
-        <div className="mt-2 mt-md-0">
-          <label htmlFor="filtroCategoria" className="visually-hidden">Filtrar por categoría</label>
+          <h3 className="h6 fw-bold">Forma de entrega</h3>
+          <div className="form-check">
+            <input
+              className="form-check-input"
+              type="radio"
+              name="tipoEntrega"
+              id="retiroTienda"
+              value="retiro"
+              checked={entrega === 'retiro'}
+              onChange={(e) => setEntrega(e.target.value)}
+            />
+            <label className="form-check-label" htmlFor="retiroTienda">Retiro en tienda</label>
+          </div>
+          <div className="form-check mb-3">
+            <input
+              className="form-check-input"
+              type="radio"
+              name="tipoEntrega"
+              id="despachoDomicilio"
+              value="despacho"
+              checked={entrega === 'despacho'}
+              onChange={(e) => setEntrega(e.target.value)}
+            />
+            <label className="form-check-label" htmlFor="despachoDomicilio">Despacho a domicilio</label>
+          </div>
+
+          {entrega === 'despacho' && (
+            <div className="mb-3">
+              <label htmlFor="direccionDespacho" className="form-label">Dirección de despacho</label>
+              <input
+                type="text"
+                className="form-control"
+                id="direccionDespacho"
+                value={direccionDespacho}
+                onChange={(e) => setDireccionDespacho(e.target.value)}
+                placeholder="Ingrese su dirección"
+              />
+            </div>
+          )}
+
+          <h3 className="h6 fw-bold">Forma de pago</h3>
           <select
-            id="filtroCategoria"
-            className="form-select"
-            style={{ width: 'auto' }}
-            value={filtro}
-            onChange={(e) => setFiltro(e.target.value)}
-            aria-label="Filtrar productos por categoría"
+            id="metodoPagoCarrito"
+            className="form-select mb-3"
+            value={metodoPago}
+            onChange={(e) => setMetodoPago(e.target.value)}
           >
-            {CATEGORIAS.map((categoria) => (
-              <option key={categoria.valor} value={categoria.valor}>
-                {categoria.label}
-              </option>
-            ))}
+            <option value="tarjeta">Tarjeta</option>
+            <option value="transferencia">Transferencia</option>
+            <option value="efectivo">Efectivo</option>
           </select>
+
+          {tieneCuentaCorriente && (
+            <div className="form-check mb-3">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                id="usarCuentaCorriente"
+                checked={usarCuentaCorriente}
+                onChange={(e) => setUsarCuentaCorriente(e.target.checked)}
+              />
+              <label className="form-check-label" htmlFor="usarCuentaCorriente">Pagar mediante cuenta corriente</label>
+            </div>
+          )}
+
+          <hr />
+          <div className="d-flex justify-content-between">
+            <span>Subtotal:</span>
+            <strong>{formatoPesos(totales.subtotal)}</strong>
+          </div>
+          {esContratista && (
+            <div className="d-flex justify-content-between">
+              <span>Descuento contratista:</span>
+              <strong>{formatoPesos(totales.descuento)}</strong>
+            </div>
+          )}
+          <div className="d-flex justify-content-between fs-5 mt-2">
+            <strong>Total:</strong>
+            <strong>{formatoPesos(totales.total)}</strong>
+          </div>
+          <button type="button" className="btn btn-success w-100 mt-4" onClick={confirmar}>
+            <i className="bi bi-check-circle me-1" /> Confirmar pedido
+          </button>
         </div>
       </div>
-
-      {mensaje && <AlertaBootstrap tipo={mensaje.tipo} onClose={() => setMensaje(null)}>{mensaje.texto}</AlertaBootstrap>}
-
-      {visibles.length === 0 ? (
-        <div className="text-center py-5 text-muted">
-          <i className="bi bi-box-seam display-4 d-block mb-2" />
-          No hay productos en esta categoría por el momento.
-        </div>
-      ) : (
-        <div className="row g-4" id="listaProductos">
-          {visibles.map((producto) => (
-            <div key={producto.codigo} className="col-12 col-sm-6 col-lg-3">
-              <ProductoCard producto={producto} onAgregar={manejarAgregar} />
-            </div>
-          ))}
-        </div>
-      )}
     </section>
   )
 }

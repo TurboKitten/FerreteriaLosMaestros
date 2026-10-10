@@ -1,54 +1,82 @@
-import { formatoPesos } from '../utils/formato'
+import { useState } from 'react'
+import ProductoCard from './ProductoCard'
+import AlertaBootstrap from './AlertaBootstrap'
+import { CATEGORIAS } from '../data/tienda'
+import { agregarProducto } from '../utils/carrito'
+import { cargarProductos, cargarCarrito, guardarCarrito } from '../services/almacen'
 
 
-export default function ProductoCard({ producto, onAgregar }) {
-  const stock = Number(producto.stock) || 0
-  const disponible = stock > 0
+export default function CatalogoProductos() {
+  const [filtro, setFiltro] = useState('todos')
+  const [productos] = useState(() => cargarProductos())
+  const [mensaje, setMensaje] = useState(null)
+
+  const visibles =
+    filtro === 'todos' ? productos : productos.filter((p) => p.categoria === filtro)
+
+  const manejarAgregar = (codigo) => {
+    const producto = productos.find((p) => p.codigo === codigo)
+    if (!producto) {
+      setMensaje({tipo: 'danger', texto: 'No se encontró el producto.'})
+      return
+    }
+
+    const carrito = cargarCarrito()
+    const nuevoCarrito = agregarProducto(carrito, producto)
+    if (nuevoCarrito === carrito) {
+      setMensaje({tipo: 'warning', texto: `No puedes agregar más unidades de ${producto.producto}: stock insuficiente.`})
+      return
+    }
+
+    guardarCarrito(nuevoCarrito)
+    setMensaje({tipo: 'success', texto: `${producto.producto} fue agregado al carrito.`})
+  }
 
   return (
-    <div className="card h-100 shadow-sm producto-card" data-codigo={producto.codigo}>
-      {producto.imagen ? (
-        <img src={producto.imagen} className="card-img-top" alt={producto.producto} />
+    <section id="catalogo" className="container py-5">
+      <div className="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+          <h2 className="h4 fw-bold mb-0">
+            <i className="bi bi-grid-fill text-primary me-2" />Catálogo de Productos
+          </h2>
+          <small className="text-muted">Precios con IVA incluido. Consulta descuento especial para contratistas.</small>
+        </div>
+
+        <div className="mt-2 mt-md-0">
+          <label htmlFor="filtroCategoria" className="visually-hidden">Filtrar por categoría</label>
+          <select
+            id="filtroCategoria"
+            className="form-select"
+            style={{ width: 'auto' }}
+            value={filtro}
+            onChange={(e) => setFiltro(e.target.value)}
+            aria-label="Filtrar productos por categoría"
+          >
+            {CATEGORIAS.map((categoria) => (
+              <option key={categoria.valor} value={categoria.valor}>
+                {categoria.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {mensaje && <AlertaBootstrap tipo={mensaje.tipo} onClose={() => setMensaje(null)}>{mensaje.texto}</AlertaBootstrap>}
+
+      {visibles.length === 0 ? (
+        <div className="text-center py-5 text-muted">
+          <i className="bi bi-box-seam display-4 d-block mb-2" />
+          No hay productos en esta categoría por el momento.
+        </div>
       ) : (
-        <div
-          className="card-img-top d-flex align-items-center justify-content-center text-primary"
-          style={{ minHeight: '150px', fontSize: '3rem' }}
-        >
-          <i className="bi bi-tools" aria-hidden="true" />
+        <div className="row g-4" id="listaProductos">
+          {visibles.map((producto) => (
+            <div key={producto.codigo} className="col-12 col-sm-6 col-lg-3">
+              <ProductoCard producto={producto} onAgregar={manejarAgregar} />
+            </div>
+          ))}
         </div>
       )}
-
-      <div className="card-body d-flex flex-column">
-        <h5 className="card-title">{producto.producto}</h5>
-        <p className="card-text mb-1">
-          <strong>Precio:</strong> {formatoPesos(producto.precio)}
-        </p>
-        <p className="card-text">
-          <strong>Stock:</strong>{' '}
-          <span className={disponible ? 'text-success stock-producto' : 'text-danger stock-producto'}>
-            {stock === 0
-              ? 'Sin stock'
-              : `${stock} ${stock === 1 ? 'unidad' : 'unidades'}`}
-          </span>
-        </p>
-        <button
-          type="button"
-          className="btn btn-primary btn-sm w-100 mt-auto btn-agregar-carrito"
-          data-codigo={producto.codigo}
-          disabled={!disponible}
-          onClick={() => onAgregar(producto.codigo)}
-        >
-          {disponible ? (
-            <>
-              <i className="bi bi-cart-plus me-1" /> Agregar al carrito
-            </>
-          ) : (
-            <>
-              <i className="bi bi-x-circle me-1" /> Sin stock
-            </>
-          )}
-        </button>
-      </div>
-    </div>
+    </section>
   )
 }
