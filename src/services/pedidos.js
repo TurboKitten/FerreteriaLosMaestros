@@ -1,7 +1,7 @@
-import { cargarPedidos, guardarPedidos } from './almacen'
+import { api } from './api'
+import { cargarPedidos, guardarPedidos, fetchPedidos } from './almacen'
 
-
-export function crearPedidoCarrito({
+export async function crearPedidoCarrito({
   carrito,
   sesion,
   entrega = 'retiro',
@@ -38,14 +38,23 @@ export function crearPedidoCarrito({
     origen: 'carrito',
   }
 
-  const pedidos = cargarPedidos()
-  pedidos.push(pedido)
-  guardarPedidos(pedidos)
-  return pedido
+  try {
+    const creado = await api.post('/v1/pedidos', pedido)
+    const normalizado = { ...pedido, ...creado }
+    const pedidos = cargarPedidos()
+    pedidos.unshift(normalizado)
+    guardarPedidos(pedidos)
+    return normalizado
+  } catch (e) {
+    console.warn('No se pudo crear pedido en API, guardando localmente', e)
+    const pedidos = cargarPedidos()
+    pedidos.push(pedido)
+    guardarPedidos(pedidos)
+    return pedido
+  }
 }
 
-
-export function crearPedidoVendedor({
+export async function crearPedidoVendedor({
   folio,
   detalle,
   tarifa = 'general',
@@ -70,8 +79,20 @@ export function crearPedidoVendedor({
     origen: 'vendedor',
   }
 
-  const pedidos = cargarPedidos()
-  pedidos.push(pedido)
-  guardarPedidos(pedidos)
-  return pedido
+  try {
+    const creado = await api.post('/v1/pedidos', pedido)
+    const normalizado = { ...pedido, ...creado }
+    const pedidos = cargarPedidos()
+    pedidos.unshift(normalizado)
+    guardarPedidos(pedidos)
+    return normalizado
+  } catch (e) {
+    console.warn('No se pudo crear pedido en API, guardando localmente', e)
+    const pedidos = cargarPedidos()
+    pedidos.push(pedido)
+    guardarPedidos(pedidos)
+    return pedido
+  }
 }
+
+export { fetchPedidos }

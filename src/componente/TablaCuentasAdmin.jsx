@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import AlertaBootstrap from './AlertaBootstrap'
-import { cargarCuentas, guardarCuentas } from '../services/almacen'
+import { cargarCuentas, fetchCuentas, guardarCuentas } from '../services/almacen'
 import { formatoPesos } from '../utils/formato'
 
 const ABONO = 500000
@@ -9,6 +9,10 @@ const ABONO = 500000
 export default function TablaCuentasAdmin() {
   const [cuentas, setCuentas] = useState(() => cargarCuentas())
   const [alerta, setAlerta] = useState(null)
+
+  useEffect(() => {
+    fetchCuentas().then(setCuentas)
+  }, [])
 
   const abonar = (cuenta) => {
     const abono = Math.min(ABONO, Number(cuenta.deuda) || 0)

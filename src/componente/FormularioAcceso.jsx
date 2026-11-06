@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import AlertaBootstrap from './AlertaBootstrap'
-import { cargarUsuarios, iniciarSesion, notificarSesion } from '../services/almacen'
+import { loginApi, notificarSesion } from '../services/almacen'
 import { validarRequerido } from '../utils/validaciones'
 
 function destinoSegunRol(rol) {
@@ -18,7 +18,7 @@ export default function FormularioAcceso() {
   const [errores, setErrores] = useState({})
   const [mensaje, setMensaje] = useState(null)
 
-  const enviar = (e) => {
+  const enviar = async (e) => {
     e.preventDefault()
 
     const nuevosErrores = {}
@@ -35,18 +35,13 @@ export default function FormularioAcceso() {
       return
     }
 
-    const usuarios = cargarUsuarios()
-    const encontrado = usuarios.find(
-      (u) => String(u.usuario).toLowerCase() === String(usuario).trim().toLowerCase(),
-    )
-
-    if (!encontrado || password !== (encontrado.password || '1234')) {
-      setMensaje({ tipo: 'danger', texto: 'El usuario o la contraseña son incorrectos.' })
-      return
+    try {
+      const sesion = await loginApi(usuario.trim(), password)
+      notificarSesion()
+      navigate(destinoSegunRol(sesion.rol))
+    } catch (err) {
+      setMensaje({ tipo: 'danger', texto: err.message || 'El usuario o la contraseña son incorrectos.' })
     }
-    iniciarSesion({ nombre: encontrado.nombre, usuario: encontrado.usuario, rol: encontrado.rol })
-    notificarSesion()
-    navigate(destinoSegunRol(encontrado.rol))
   }
 
   return (
