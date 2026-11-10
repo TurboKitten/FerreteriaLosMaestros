@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import AlertaBootstrap from './AlertaBootstrap'
-import { cargarUsuarios, guardarUsuarios } from '../services/almacen'
+import { cargarUsuarios, fetchUsuarios, guardarUsuarios } from '../services/almacen'
 import { validarRequerido } from '../utils/validaciones'
 
 const ROLES_POSIBLES = ['Vendedor', 'Contratista', 'Administrador']
@@ -10,6 +10,10 @@ export default function FormularioNuevoUsuario() {
   const [datos, setDatos] = useState({ nombre: '', usuario: '', password: '', rol: 'Vendedor' })
   const [errores, setErrores] = useState({})
   const [alerta, setAlerta] = useState(null)
+
+  useEffect(() => {
+    fetchUsuarios().then(setUsuarios)
+  }, [])
 
   const cambiar = (campo) => (e) => {
     setDatos((actual) => ({ ...actual, [campo]: e.target.value }))

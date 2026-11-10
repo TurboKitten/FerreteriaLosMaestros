@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import ListaCarrito from '../../componente/ListaCarrito'
 import ResumenCarrito from '../../componente/ResumenCarrito'
@@ -11,6 +11,9 @@ import {
   cargarPedidos,
   cargarProductos,
   cargarUsuarios,
+  fetchPedidos,
+  fetchProductos,
+  fetchUsuarios,
   guardarCarrito,
   guardarProductos,
   obtenerSesion,
@@ -25,6 +28,11 @@ export default function Carrito() {
   const [sesion] = useState(() => obtenerSesion())
   const [confirmando, setConfirmando] = useState(false)
   const [alerta, setAlerta] = useState(null)
+  const [, setVersion] = useState(0)
+
+  useEffect(() => {
+    Promise.all([fetchProductos(), fetchPedidos(), fetchUsuarios()]).then(() => setVersion((v) => v + 1))
+  }, [])
 
   const esContratista = Boolean(sesion && sesion.rol === 'Contratista')
 
@@ -63,7 +71,7 @@ export default function Carrito() {
     guardarYRefrescar(eliminarProducto(items, codigo))
   }
 
-  const confirmarPedido = (opciones) => {
+  const confirmarPedido = async (opciones) => {
     if (items.length === 0) {
       setAlerta({ tipo: 'warning', texto: 'El carrito está vacío.' })
       return
@@ -87,27 +95,31 @@ export default function Carrito() {
       }
     }
 
-    //descontar stock
+    //descontar stock (local/cache; persistencia en API se puede agregar después)
     const nuevosProductos = productos.map((producto) => {
       const vendido = items.filter((i) => i.codigo === producto.codigo).reduce((total, i) => total + Number(i.cantidad), 0)
       return vendido > 0 ? { ...producto, stock: producto.stock - vendido } : producto
     })
     guardarProductos(nuevosProductos)
 
-    const pedido = crearPedidoCarrito({
-      carrito: items,
-      sesion,
-      entrega: opciones.entrega,
-      direccionDespacho: opciones.direccionDespacho,
-      metodoPago: opciones.metodoPago,
-      totales,
-      usarCuentaCorriente: opciones.usarCuentaCorriente,
-      tieneCuentaCorriente: tieneCuentaCorriente(),
-    })
-
-    guardarYRefrescar([])
-    setConfirmando(false)
-    setAlerta({ tipo: 'success', texto: `Pedido realizado correctamente.\nNúmero de pedido: ${pedido.folio}` })
+    try {
+      const pedido = await crearPedidoCarrito({
+        carrito: items,
+        sesion,
+        entrega: opciones.entrega,
+        direccionDespacho: opciones.direccionDespacho,
+        metodoPago: opciones.metodoPago,
+        totales,
+        usarCuentaCorriente: opciones.usarCuentaCorriente,
+        tieneCuentaCorriente: tieneCuentaCorriente(),
+      })
+      guardarYRefrescar([])
+      setConfirmando(false)
+      fetchPedidos().then(() => setVersion((v) => v + 1))
+      setAlerta({ tipo: 'success', texto: `Pedido realizado correctamente.\nNúmero de pedido: ${pedido.folio}` })
+    } catch (e) {
+      setAlerta({ tipo: 'danger', texto: e.message || 'No se pudo realizar el pedido.' })
+    }
   }
 
   const misPedidos = sesion

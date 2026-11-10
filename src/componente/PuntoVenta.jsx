@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import AlertaBootstrap from './AlertaBootstrap'
-import { cargarProductos, guardarProductos } from '../services/almacen'
+import { cargarProductos, fetchProductos, guardarProductos } from '../services/almacen'
 import { crearPedidoVendedor } from '../services/pedidos'
 import { aplicarTarifa, calcularTotalesVenta, descontarStock, generarFolio } from '../utils/venta'
 import { formatoPesos } from '../utils/formato'
-import { cargarPedidos } from '../services/almacen'
+import { cargarPedidos, fetchPedidos } from '../services/almacen'
 
 const METODOS_PAGO = ['Efectivo', 'Tarjeta', 'Transferencia']
 
@@ -17,6 +17,11 @@ export default function PuntoVenta() {
   const [tarifa, setTarifa] = useState('general')
   const [metodoPago, setMetodoPago] = useState('')
   const [alerta, setAlerta] = useState(null)
+
+  useEffect(() => {
+    fetchProductos().then(setProductos)
+    fetchPedidos()
+  }, [])
 
   const totales = calcularTotalesVenta(detalle)
 
@@ -99,7 +104,7 @@ export default function PuntoVenta() {
     )
   }
 
-  const cobrar = () => {
+  const cobrar = async () => {
     if (detalle.length === 0) {
       setAlerta({ tipo: 'warning', texto: 'No hay productos en la venta.' })
       return
@@ -117,13 +122,18 @@ export default function PuntoVenta() {
 
     const pedidos = cargarPedidos()
     const folio = generarFolio(pedidos)
-    crearPedidoVendedor({
-      folio,
-      detalle,
-      tarifa,
-      metodoPago,
-      total: totales.bruto,
-    })
+    try {
+      await crearPedidoVendedor({
+        folio,
+        detalle,
+        tarifa,
+        metodoPago,
+        total: totales.bruto,
+      })
+    } catch (e) {
+      setAlerta({ tipo: 'danger', texto: e.message || 'No se pudo registrar el pedido.' })
+      return
+    }
 
     setProductos(resultado.productos)
     guardarProductos(resultado.productos)

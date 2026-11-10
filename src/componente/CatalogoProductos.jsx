@@ -1,15 +1,19 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import ProductoCard from './ProductoCard'
 import AlertaBootstrap from './AlertaBootstrap'
 import { CATEGORIAS } from '../data/tienda'
 import { agregarProducto } from '../utils/carrito'
-import { cargarProductos, cargarCarrito, guardarCarrito } from '../services/almacen'
+import { cargarProductos, fetchProductos, cargarCarrito, guardarCarrito } from '../services/almacen'
 
 
 export default function CatalogoProductos() {
   const [filtro, setFiltro] = useState('todos')
-  const [productos] = useState(() => cargarProductos())
+  const [productos, setProductos] = useState(() => cargarProductos())
   const [mensaje, setMensaje] = useState(null)
+
+  useEffect(() => {
+    fetchProductos().then(setProductos)
+  }, [])
 
   const visibles =
     filtro === 'todos' ? productos : productos.filter((p) => p.categoria === filtro)

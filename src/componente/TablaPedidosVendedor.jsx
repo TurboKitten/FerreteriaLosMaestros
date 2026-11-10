@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { cargarPedidos, guardarPedidos } from '../services/almacen'
+import { useEffect, useState } from 'react'
+import { cargarPedidos, fetchPedidos, guardarPedidos } from '../services/almacen'
 
 const ESTADOS = [
   { valor: 'pendiente', label: 'Pendiente', clase: 'bg-warning text-dark' },
@@ -15,9 +15,13 @@ function estadoDe(valor) {
 export default function TablaPedidosVendedor() {
   const [pedidos, setPedidos] = useState(() => cargarPedidos())
 
+  useEffect(() => {
+    fetchPedidos().then(setPedidos)
+  }, [])
+
   const cambiarEstado = (folio, nuevoEstado) => {
     const nuevos = pedidos.map((pedido) =>
-      Number(pedido.folio) === Number(folio) ? { ...pedido, estado: nuevoEstado } : pedido,
+      String(pedido.folio) === String(folio) ? { ...pedido, estado: nuevoEstado } : pedido,
     )
     setPedidos(nuevos)
     guardarPedidos(nuevos)

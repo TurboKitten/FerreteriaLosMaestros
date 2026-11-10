@@ -1,12 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import AlertaBootstrap from './AlertaBootstrap'
-import { cargarProductos, guardarProductos } from '../services/almacen'
+import { cargarProductos, fetchProductos, guardarProductos } from '../services/almacen'
 
 //control de inventario y stock critico
 export default function ControlStockAdmin() {
   const [productos, setProductos] = useState(() => cargarProductos())
   const [cantidades, setCantidades] = useState({})
   const [alerta, setAlerta] = useState(null)
+
+  useEffect(() => {
+    fetchProductos().then(setProductos)
+  }, [])
 
   const critico = (producto) => Number(producto.stock) <= Number(producto.minimo || 0)
   const stockCritico = productos.filter(critico).length
